@@ -1,0 +1,63 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!78 &1
+TagManager:
+  serializedVersion: 3
+  tags:
+  - Platform
+  - BreakingPlatform
+  - Spring
+  layers:
+  - Default
+  - TransparentFX
+  - Ignore Raycast
+  - 
+  - Water
+  - UI
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  - 
+  m_SortingLayers:
+  - name: Default
+    uniqueID: 0
+    locked: 0
+  - name: Background
+    uniqueID: 3701081271
+    locked: 0
+  - name: Platforms
+    uniqueID: 2669345865
+    locked: 0
+  - name: Items
+    uniqueID: 3851842223
+    locked: 0
+  - name: Enemies
+    uniqueID: 4205438983
+    locked: 0
+  - name: Player
+    uniqueID: 2209804345
+    locked: 0
+  m_RenderingLayers:
+  - Default
