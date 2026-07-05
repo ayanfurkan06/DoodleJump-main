@@ -21,10 +21,9 @@ public class FuelItem : MonoBehaviour
                     ScreenEffectManager.Instance.TriggerGradientEffect();
                 }
 
-                // Ýleride ses efekti kutusu dolduðunda çalmasý için (Null-safe)
+                // --- GÜNCEL SES: YAKIT (SAÐLIK) TOPLAMA ---
                 if (AudioManager.Instance != null)
                 {
-                    // Þimdilik ses kutusu boþ olsa da hata vermez, can alma sesini veya yeni atayacaðýn sesi çalabilirsin
                     AudioManager.Instance.PlaySFX(AudioManager.Instance.collectHealthSound);
                 }
 

@@ -35,6 +35,7 @@ public class MainMenuManager : MonoBehaviour
     {
         if (AudioManager.Instance != null)
         {
+            // AudioManager zaten kendi içinde klik sesini çalıyor, o yüzden buradaki manuel ses satırını kaldırdık!
             bool isMuted = AudioManager.Instance.ToggleBGM();
             musicButtonText.text = isMuted ? "MUZIK: KAPALI" : "MUZIK: ACIK";
         }
@@ -44,6 +45,7 @@ public class MainMenuManager : MonoBehaviour
     {
         if (AudioManager.Instance != null)
         {
+            // Buradaki manuel ses satırını da kaldırdık, çift ses çalmayacak
             bool isMuted = AudioManager.Instance.ToggleSFX();
             sfxButtonText.text = isMuted ? "SES: KAPALI" : "SES: ACIK";
         }
@@ -57,7 +59,6 @@ public class MainMenuManager : MonoBehaviour
             sfxButtonText.text = AudioManager.Instance.IsSFXMuted() ? "SES: KAPALI" : "SES: ACIK";
         }
 
-        // Haf�zadaki kontrol y�ntemine g�re buton yaz�lar�n� g�ncelle (Aktif olan� belli et)
         int currentMethod = PlayerPrefs.GetInt("ControlMethod", 0);
         if (currentMethod == 0)
         {
@@ -71,7 +72,6 @@ public class MainMenuManager : MonoBehaviour
         }
     }
 
-    // --- KONTROL METODU SE��M BUTONLARI ---
     public void SetControlToGyro()
     {
         if (AudioManager.Instance != null)
@@ -81,7 +81,7 @@ public class MainMenuManager : MonoBehaviour
         PlayerPrefs.SetInt("ControlMethod", 0);
         PlayerPrefs.Save();
         UpdateAllButtonTexts();
-        Debug.Log("Kontrol Sistemi De�i�ti: Jiroskop Aktif");
+        Debug.Log("Kontrol Sistemi Değişti: Jiroskop Aktif");
     }
 
     public void SetControlToTouch()
@@ -90,10 +90,10 @@ public class MainMenuManager : MonoBehaviour
         {
             AudioManager.Instance.PlaySFX(AudioManager.Instance.buttonClickSound);
         }
-        
+
         PlayerPrefs.SetInt("ControlMethod", 1);
         PlayerPrefs.Save();
         UpdateAllButtonTexts();
-        Debug.Log("Kontrol Sistemi De�i�ti: Dokunmatik Ekran Aktif");
+        Debug.Log("Kontrol Sistemi Değişti: Dokunmatik Ekran Aktif");
     }
 }

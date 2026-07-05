@@ -1,14 +1,15 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.SceneManagement;
-using System.Collections; // Hatal� kelime d�zeltildi
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
     public Transform playerTransform;
     public TextMeshProUGUI scoreText;
 
-    [Header("Game Over UI Ayarlar�")] public GameObject gameOverPanel;
+    [Header("Game Over UI Ayarları")]
+    public GameObject gameOverPanel;
 
     private float highestY = 0f;
     private int highScore = 0;
@@ -48,23 +49,33 @@ public class GameManager : MonoBehaviour
         if (isGameOver) return;
         isGameOver = true;
 
+        Time.timeScale = 0f;
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+
         int finalScore = Mathf.RoundToInt(highestY);
+
+        // --- GÜNCELLENEN ALAN: REKOR KONTROLÜ VE SES TETİKLEMESİ ---
         if (finalScore > highScore)
         {
             PlayerPrefs.SetInt("HighScore", finalScore);
             PlayerPrefs.Save();
-        }
 
-        Time.timeScale = 0f;
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        
-        if (AudioManager.Instance != null)
+            // Yeni rekor kırıldıysa coşkulu rekor sesini çal
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.highScoreSound);
+            }
+        }
+        else
         {
-            AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+            // Rekor kırılmadıysa normal oyun bitti sesini çal
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+            }
         }
     }
 
-    // D��man taraf�ndan �ld�r�l�nce �a�r�lacak gecikmeli fonksiyon
     public void TriggerEnemyDeath(GameObject playerObj)
     {
         if (isGameOver) return;
@@ -83,30 +94,51 @@ public class GameManager : MonoBehaviour
     {
         yield return new WaitForSeconds(2f);
 
+        Time.timeScale = 0f;
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+
         int finalScore = Mathf.RoundToInt(highestY);
+
+        // --- GÜNCELLENEN ALAN: GECİKMELİ ÖLÜMDE REKOR KONTROLÜ ---
         if (finalScore > highScore)
         {
             PlayerPrefs.SetInt("HighScore", finalScore);
             PlayerPrefs.Save();
-        }
 
-        Time.timeScale = 0f;
-        if (gameOverPanel != null) gameOverPanel.SetActive(true);
-        
-        if (AudioManager.Instance != null)
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.highScoreSound);
+            }
+        }
+        else
         {
-            AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+            }
         }
     }
 
     public void RestartGame()
     {
+        // --- YENİ EKLENEN: BUTON TIKLAMA SESİ ---
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.buttonClickSound);
+        }
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
     public void GoToMainMenu()
     {
+        // --- YENİ EKLENEN: BUTON TIKLAMA SESİ ---
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.buttonClickSound);
+        }
+
         Time.timeScale = 1f;
         SceneManager.LoadScene("MainMenu");
     }

@@ -24,10 +24,11 @@ public class Spring : MonoBehaviour
                     ScreenEffectManager.Instance.TriggerShortWindEffect(0.4f);
                 }
 
-                // Yaya basinca guclu firlama sesi cal
+                // --- YENÝ EKLENEN: YAY VE RÜZGAR SESÝ ---
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlaySFX(AudioManager.Instance.springSound);
+                    AudioManager.Instance.PlaySFX(AudioManager.Instance.windStormSound); // Rüzgar efekti çýktýðý için bu ses de çalacak
                 }
 
                 // Ezilme ve eski haline geri dönme sürecini baþlatan Coroutine fonksiyonunu çaðýrýyoruz
@@ -35,6 +36,7 @@ public class Spring : MonoBehaviour
             }
         }
     }
+
     private System.Collections.IEnumerator SpringBounceRoutine()
     {
         Vector3 originalScale = new Vector3(transform.localScale.x, transform.localScale.y, transform.localScale.z);
@@ -60,9 +62,7 @@ public class Spring : MonoBehaviour
             yield return null; // Bir sonraki kareye kadar bekle
         }
 
-
         // 4. Ýþlemin sonunda tam orijinal boyutunda kaldýðýndan emin oluyoruz
         transform.localScale = originalScale;
     }
-    
 }

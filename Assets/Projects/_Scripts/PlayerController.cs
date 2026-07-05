@@ -5,7 +5,7 @@ public class PlayerController : MonoBehaviour
     private Animator _animator;
     private float nextJumpTime = 0f;
 
-    [Header("Roket Ayakkab� Ayarlar�")]
+    [Header("Roket Ayakkabı Ayarları")]
     public UnityEngine.UI.Slider fuelSlider;
     public float maxFuel = 100f;
     public float flyForce = 10f;
@@ -14,23 +14,24 @@ public class PlayerController : MonoBehaviour
     private float currentFuel;
     private bool isFlying = false;
 
-    [Header("Hareket Ayarlar�")]
+    [Header("Hareket Ayarları")]
     public float moveSpeed = 8f;
     private Rigidbody2D rb;
     private float horizontalInput;
 
-    [Header("Dokunmatik ve �ift T�klama Ayarlar�")]
+    [Header("Dokunmatik ve Çift Tıklama Ayarları")]
     public float doubleTapTimeLimit = 0.3f;
     private float lastTapTime = 0f;
     private bool isDoubleTapHolding = false;
 
     private int controlMethod = 0;
-    [Header("Karakter G�rsel Nesnesi")]
+
+    [Header("Karakter Görsel Nesnesi")]
     public Transform characterVisual;
 
-    [Header("Yeni �l�m Ayarlar�")]
-    public SpriteRenderer playerEyeSpriteRenderer; // M�fetti�ten karakterin alt�ndaki eye_8 nesnesini buraya ba�layaca��z
-    public Sprite deadEyeSprite;                   // M�fetti�ten eye_17 g�rselini buraya takaca��z
+    [Header("Yeni Ölüm Ayarları")]
+    public SpriteRenderer playerEyeSpriteRenderer;
+    public Sprite deadEyeSprite;
 
     void Start()
     {
@@ -42,8 +43,11 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // E�er karakter �ld�yse hi�bir tu� girdisini veya hareketi alg�lama, kilitlensin
+        // Eğer karakter öldüyse hiçbir tuş girdisini veya hareketi algılama, kilitlensin
         if (playerEyeSpriteRenderer != null && playerEyeSpriteRenderer.sprite == deadEyeSprite) return;
+
+        // Uçuş sesinin cızırtı yapmasını engellemek için önceki durumu kaydediyoruz
+        bool wasFlying = isFlying;
 
         controlMethod = PlayerPrefs.GetInt("ControlMethod", 0);
 
@@ -70,6 +74,17 @@ public class PlayerController : MonoBehaviour
         else
         {
             HandleTouchInput();
+        }
+
+        // --- YENİ EKLENEN: YAKIT KULLANMA / UÇMA SESİ ---
+        // Sadece uçuşa YENİ başladığı o ilk an sesi tetikleriz.
+        if (isFlying && !wasFlying)
+        {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.useFuelSound);
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.windStormSound); // Roket ayakkabı rüzgar da çıkarttığı için
+            }
         }
 
         if (isFlying)
@@ -103,7 +118,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Karakter �ld�yse fiziksel kontrolleri de engelle
+        // Karakter öldüyse fiziksel kontrolleri de engelle
         if (playerEyeSpriteRenderer != null && playerEyeSpriteRenderer.sprite == deadEyeSprite) return;
 
         rb.linearVelocity = new Vector2(horizontalInput * moveSpeed, rb.linearVelocity.y);
@@ -116,9 +131,6 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    // Yeni �l�m Hareketi Fonksiyonu
-    // --- GELECEKTEK� S�STEMLER ���N CANLILIK KONTROL� ---
-    // D��ar�daki scriptler (WeatherManager gibi) oyuncunun hayatta olup olmad���n� buradan okuyacak.
     public bool IsDead()
     {
         if (playerEyeSpriteRenderer != null && deadEyeSprite != null)
@@ -130,40 +142,31 @@ public class PlayerController : MonoBehaviour
 
     public void DieWithAnimation()
     {
-        // 1. G�zleri spinal g�z ile de�i�tir (Bu andan itibaren IsDead() true d�necek)
         if (playerEyeSpriteRenderer != null && deadEyeSprite != null)
         {
             playerEyeSpriteRenderer.sprite = deadEyeSprite;
         }
 
-        // --- YEN� EKLEME: ESNEKL��� SIFIRLAMA ---
-        // Karakter z�plarken Animator y�z�nden esnemi� olabilir. 
-        // Animator'� kapatmadan �nce boyutunu zorla orijinal (1, 1, 1) haline getiriyoruz.
+        // --- YENİ EKLENEN: AŞAĞI DÜŞÜP ÖLME SESİ ---
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
+        }
+
         transform.localScale = new Vector3(1f, 1f, 1f);
         if (characterVisual != null)
         {
             characterVisual.localScale = new Vector3(1f, 1f, 1f);
         }
-        // ----------------------------------------
 
-        // 2. Animator bile�enini kapat�yoruz
         if (_animator != null) _animator.enabled = false;
 
-        // 3. KARAKTER� ANINDA TEPETAKLA EDEN MOTORU ---
-        if (characterVisual != null)
-        {
-            // Karakterin y�n�ne g�re X scale de�erini korumak istersen �stteki d�zleme yeterlidir,
-            // ama tamamen orijinal boyut i�in buradaki i�lemleri de temizlemi� olduk.
-        }
-
-        // 4. Karakterin collider'lar�n� kapat�yoruz
         Collider2D[] extColliders = GetComponents<Collider2D>();
         foreach (Collider2D col in extColliders) col.enabled = false;
 
         Collider2D[] childColliders = GetComponentsInChildren<Collider2D>();
         foreach (Collider2D col in childColliders) col.enabled = false;
 
-        // 5. Karakteri fiziksel olarak hafif�e yukar� f�rlat�p sonsuza d�k�lerek d���r�yoruz
         if (rb != null)
         {
             rb.freezeRotation = false;
@@ -191,6 +194,8 @@ public class PlayerController : MonoBehaviour
                 if (platformCarpti && rb != null)
                 {
                     rb.linearVelocity = new Vector2(rb.linearVelocity.x, 12f);
+
+                    // NORMAL ZIPLAMA SESİ BURADA ZATEN VARDI
                     if (AudioManager.Instance != null)
                     {
                         AudioManager.Instance.PlaySFX(AudioManager.Instance.jumpSound);

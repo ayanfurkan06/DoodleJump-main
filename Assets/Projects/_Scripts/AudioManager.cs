@@ -7,16 +7,26 @@ public class AudioManager : MonoBehaviour
     [Header("Müzik Kaynağı")]
     public AudioSource bgmSource; // Arka plan müziği için
 
-    // Artık tek bir sfxSource yok. Her sesin KENDİ AudioSource'u var.
     [Header("Ses Efektleri (AudioSource)")]
     public AudioSource jumpSound;
     public AudioSource springSound;
     public AudioSource collectHealthSound;
     public AudioSource takeDamageSound;
     public AudioSource gameOverSound;
-    public AudioSource buttonClickSound; 
+    public AudioSource buttonClickSound;
 
-    // Tüm SFX kaynaklarını kolayca döngüye sokup susturmak/açmak için bir dizi
+    // --- YENİ EKLENEN SES EFEKTLERİ ---
+    public AudioSource brokenPlatformJumpSound;
+    public AudioSource enemyDeathSound;
+    public AudioSource shieldEquipSound;
+    public AudioSource shieldHitSound;
+    public AudioSource shieldBreakSound;
+    public AudioSource enemySwordSwingSound;
+    public AudioSource useFuelSound;
+    public AudioSource windStormSound;
+    public AudioSource highScoreSound;
+
+    // Tüm SFX kaynaklarını döngüye sokup susturmak/açmak için dizi
     private AudioSource[] allSFXSources;
 
     private bool isMutedBGM = false;
@@ -24,7 +34,7 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
-        // Sahneler arası geçişte müziğin kesilmemesini sağlayan mimari (Singleton)
+        // Sahneler arası geçişte müziğin kesilmemesini sağlayan Singleton mimari
         if (Instance == null)
         {
             Instance = this;
@@ -45,27 +55,25 @@ public class AudioManager : MonoBehaviour
     {
         // Bütün SFX'leri bir diziye atıyoruz ki tek tek kontrol etmek yerine kodumuz temiz olsun
         allSFXSources = new AudioSource[] {
-            jumpSound, springSound, collectHealthSound, 
-            takeDamageSound, gameOverSound, buttonClickSound
+            jumpSound, springSound, collectHealthSound, takeDamageSound, gameOverSound, buttonClickSound,
+            brokenPlatformJumpSound, enemyDeathSound, shieldEquipSound, shieldHitSound, shieldBreakSound,
+            enemySwordSwingSound, useFuelSound, windStormSound, highScoreSound
         };
 
         // Hafıza durumuna göre sesleri ilk açılışta ayarla
         bgmSource.mute = isMutedBGM;
-        UpdateSFXMuteState(); // SFX'leri ayarlayan yeni yardımcı fonksiyonumuz
+        UpdateSFXMuteState(); // SFX'leri ayarlayan yardımcı fonksiyonumuz
 
         // Müziği başlat
         if (!bgmSource.isPlaying) bgmSource.Play();
     }
 
     // --- SES EFEKTİ ÇALMA FONKSİYONU ---
-    // Artık parametre olarak AudioClip değil, doğrudan çalınacak AudioSource'u alıyor
     public void PlaySFX(AudioSource source)
     {
         if (source != null && !isMutedSFX)
         {
-            // source.PlayOneShot() yerine source.Play() kullanıyoruz. 
-            // Çünkü Inspector'dan ayarladığın Loop vb. özelliklerin direkt çalışması için Play() gereklidir.
-            source.Play(); 
+            source.Play();
         }
     }
 
@@ -96,7 +104,7 @@ public class AudioManager : MonoBehaviour
     {
         isMutedSFX = !isMutedSFX;
         UpdateSFXMuteState(); // Tüm ses kaynaklarını sustur veya aç
-        
+
         PlayerPrefs.SetInt("MutedSFX", isMutedSFX ? 0 : 1);
         PlayerPrefs.Save();
         PlaySFX(buttonClickSound); // Butona basınca klik sesi çal

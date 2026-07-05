@@ -10,6 +10,12 @@ public class BreakingPlatform : MonoBehaviour
             // Karakteri kesin olarak yukari firlat
             collision.gameObject.GetComponent<Rigidbody2D>().linearVelocity = new Vector2(collision.gameObject.GetComponent<Rigidbody2D>().linearVelocity.x, 12f);
 
+            // --- YENÝ EKLENEN: KIRILAN PLATFORM SESÝ ---
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.brokenPlatformJumpSound);
+            }
+
             // --- ANIMASYON TETIKLEME KATMANI ---
             // Karakterin altindaki Animator bilesenini bulup bacak esnetmesini tetikliyoruz
             Animator playerAnim = collision.gameObject.GetComponentInChildren<Animator>();
