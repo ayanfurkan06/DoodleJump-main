@@ -110,6 +110,19 @@ public class AudioManager : MonoBehaviour
         PlaySFX(buttonClickSound); // Butona basınca klik sesi çal
         return isMutedSFX;
     }
+    
+    public void StopAllSFX()
+    {
+        if (allSFXSources == null) return;
+
+        foreach (AudioSource source in allSFXSources)
+        {
+            if (source != null && source.isPlaying)
+            {
+                source.Stop();
+            }
+        }
+    }
 
     // Mevcut durumları buton yazıları için dışarıya bildiren yardımcı fonksiyonlar
     public bool IsBGMMuted() { return isMutedBGM; }

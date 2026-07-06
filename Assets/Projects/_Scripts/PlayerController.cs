@@ -19,17 +19,18 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private float horizontalInput;
 
-    [Header("Dokunmatik ve Çift Tıklama Ayarları")]
-    public float doubleTapTimeLimit = 0.3f;
+    [Header("Kontrol Yöntemi Ayarları")]
+    [Tooltip("Çift tıklama algılama süresi (saniye)")]
+    [Range(0.1f, 1.5f)] // Inspector'de slider olarak görünmesini sağlar
+    public float doubleTapTimeLimit = 0.3f; 
+    public float gyroSensitivity = 2f; 
     private float lastTapTime = 0f;
     private bool isDoubleTapHolding = false;
-
-    private int controlMethod = 0;
 
     [Header("Karakter Görsel Nesnesi")]
     public Transform characterVisual;
 
-    [Header("Yeni Ölüm Ayarları")]
+    [Header("Ölüm Ayarları")]
     public SpriteRenderer playerEyeSpriteRenderer;
     public Sprite deadEyeSprite;
 
@@ -43,48 +44,24 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
-        // Eğer karakter öldüyse hiçbir tuş girdisini veya hareketi algılama, kilitlensin
-        if (playerEyeSpriteRenderer != null && playerEyeSpriteRenderer.sprite == deadEyeSprite) return;
+        if (IsDead()) return;
 
-        // Uçuş sesinin cızırtı yapmasını engellemek için önceki durumu kaydediyoruz
         bool wasFlying = isFlying;
 
-        controlMethod = PlayerPrefs.GetInt("ControlMethod", 0);
+        ProcessInput();
 
-        if (controlMethod == 0)
-        {
-            horizontalInput = Input.GetAxisRaw("Horizontal");
-
-            if (Application.platform == RuntimePlatform.Android || Application.platform == RuntimePlatform.IPhonePlayer)
-            {
-                horizontalInput = Input.acceleration.x * 1.5f;
-            }
-
-            if ((Input.GetKey(KeyCode.Space) || Input.touchCount > 0) && currentFuel > 0)
-            {
-                isFlying = true;
-                if (ScreenEffectManager.Instance != null) ScreenEffectManager.Instance.SetWindEffectActive(true);
-            }
-            else
-            {
-                isFlying = false;
-                if (ScreenEffectManager.Instance != null) ScreenEffectManager.Instance.SetWindEffectActive(false);
-            }
-        }
-        else
-        {
-            HandleTouchInput();
-        }
-
-        // --- YENİ EKLENEN: YAKIT KULLANMA / UÇMA SESİ ---
-        // Sadece uçuşa YENİ başladığı o ilk an sesi tetikleriz.
         if (isFlying && !wasFlying)
         {
             if (AudioManager.Instance != null)
             {
                 AudioManager.Instance.PlaySFX(AudioManager.Instance.useFuelSound);
-                AudioManager.Instance.PlaySFX(AudioManager.Instance.windStormSound); // Roket ayakkabı rüzgar da çıkarttığı için
+                AudioManager.Instance.PlaySFX(AudioManager.Instance.windStormSound);
             }
+            if (ScreenEffectManager.Instance != null) ScreenEffectManager.Instance.SetWindEffectActive(true);
+        }
+        else if (!isFlying && wasFlying)
+        {
+            if (ScreenEffectManager.Instance != null) ScreenEffectManager.Instance.SetWindEffectActive(false);
         }
 
         if (isFlying)
@@ -118,8 +95,7 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        // Karakter öldüyse fiziksel kontrolleri de engelle
-        if (playerEyeSpriteRenderer != null && playerEyeSpriteRenderer.sprite == deadEyeSprite) return;
+        if (IsDead()) return;
 
         rb.linearVelocity = new Vector2(horizontalInput * moveSpeed, rb.linearVelocity.y);
 
@@ -128,6 +104,84 @@ public class PlayerController : MonoBehaviour
             rb.linearVelocity = new Vector2(rb.linearVelocity.x, flyForce);
             currentFuel -= fuelBurnRate * Time.fixedDeltaTime;
             if (currentFuel < 0) currentFuel = 0;
+        }
+    }
+    
+    private void ProcessInput()
+    {
+        horizontalInput = 0f;
+        isFlying = false;
+
+        // MENÜDEN GELEN AYARI OKUYORUZ (0 = Jiroskop, 1 = Dokunmatik)
+        bool useGyroscope = PlayerPrefs.GetInt("ControlMethod", 0) == 0;
+
+        // 1. KLAVYE KONTROLÜ (A/D tuşları)
+        horizontalInput = Input.GetAxisRaw("Horizontal"); 
+
+        // 2. JİROSKOP (TILT) KONTROLÜ
+        if (useGyroscope && SystemInfo.supportsAccelerometer)
+        {
+            if (horizontalInput == 0) // Klavyeden girilmediyse
+            {
+                float tilt = Input.acceleration.x * gyroSensitivity;
+                horizontalInput = Mathf.Clamp(tilt, -1f, 1f);
+            }
+        }
+
+        bool isTouching = false;
+        Vector3 touchPosition = Vector3.zero;
+        bool touchBegan = false;
+        bool touchEnded = false;
+
+        // 3. EKRAN DOKUNMATİK VEYA MOUSE ALGILAMASI
+        if (Input.touchCount > 0)
+        {
+            Touch touch = Input.GetTouch(0);
+            isTouching = true;
+            touchPosition = touch.position;
+            
+            if (touch.phase == TouchPhase.Began) touchBegan = true;
+            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) touchEnded = true;
+        }
+        else if (Input.GetMouseButton(0) || Input.GetMouseButtonUp(0) || Input.GetMouseButtonDown(0))
+        {
+            isTouching = Input.GetMouseButton(0);
+            touchPosition = Input.mousePosition;
+            
+            if (Input.GetMouseButtonDown(0)) touchBegan = true;
+            if (Input.GetMouseButtonUp(0)) touchEnded = true;
+        }
+
+        if (isTouching)
+        {
+            // SADECE JİROSKOP KAPALIYSA EKRANA DOKUNARAK SAĞA SOLA GİT
+            if (!useGyroscope && horizontalInput == 0) 
+            {
+                if (touchPosition.x < Screen.width / 2f) horizontalInput = -1f;
+                else horizontalInput = 1f;
+            }
+
+            // ÇİFT TIKLAMA HER İKİ MODDA DA ÇALIŞMALI (Uçmak için)
+            if (touchBegan)
+            {
+                float timeSinceLastTap = Time.time - lastTapTime;
+                if (timeSinceLastTap <= doubleTapTimeLimit)
+                {
+                    isDoubleTapHolding = true;
+                }
+                lastTapTime = Time.time;
+            }
+        }
+
+        if (touchEnded || !isTouching)
+        {
+            isDoubleTapHolding = false;
+        }
+
+        // 4. ÖZELLİK KULLANIMI (Space, W veya Çift Tık)
+        if ((Input.GetKey(KeyCode.Space) || Input.GetKey(KeyCode.W) || isDoubleTapHolding) && currentFuel > 0)
+        {
+            isFlying = true;
         }
     }
 
@@ -147,17 +201,12 @@ public class PlayerController : MonoBehaviour
             playerEyeSpriteRenderer.sprite = deadEyeSprite;
         }
 
-        // --- YENİ EKLENEN: AŞAĞI DÜŞÜP ÖLME SESİ ---
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlaySFX(AudioManager.Instance.gameOverSound);
         }
 
-        transform.localScale = new Vector3(1f, 1f, 1f);
-        if (characterVisual != null)
-        {
-            characterVisual.localScale = new Vector3(1f, 1f, 1f);
-        }
+       
 
         if (_animator != null) _animator.enabled = false;
 
@@ -170,10 +219,8 @@ public class PlayerController : MonoBehaviour
         if (rb != null)
         {
             rb.freezeRotation = false;
-
             float randomVelocityX = Random.Range(-3f, 3f);
             rb.linearVelocity = new Vector2(randomVelocityX, 5f);
-
             float randomRotationSpeed = Random.Range(-360f, 360f);
             rb.angularVelocity = randomRotationSpeed;
         }
@@ -188,6 +235,14 @@ public class PlayerController : MonoBehaviour
 
         if (platformCarpti || yayaCarpti)
         {
+            // --- EKLENEN KISIM: Kırılan platform kontrolü ---
+            // Eğer çarptığımız obje "Platform" etiketine sahipse ama üzerinde "BreakingPlatform" 
+            // scripti varsa, bu normal bir zıplama platformu değildir! O yüzden zıplamayı iptal et.
+            if (collision.gameObject.GetComponent<BreakingPlatform>() != null)
+            {
+                return; // Aşağıdaki zıplama kodlarını okumadan doğrudan fonksiyondan çık.
+            }
+
             if (transform.position.y > collision.transform.position.y + 0.1f)
             {
                 nextJumpTime = Time.time + 0.4f;
@@ -195,7 +250,6 @@ public class PlayerController : MonoBehaviour
                 {
                     rb.linearVelocity = new Vector2(rb.linearVelocity.x, 12f);
 
-                    // NORMAL ZIPLAMA SESİ BURADA ZATEN VARDI
                     if (AudioManager.Instance != null)
                     {
                         AudioManager.Instance.PlaySFX(AudioManager.Instance.jumpSound);
@@ -226,48 +280,6 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-    }
-
-    void HandleTouchInput()
-    {
-        horizontalInput = 0f;
-        bool anyTouchActive = false;
-
-        if (Input.GetMouseButton(0))
-        {
-            anyTouchActive = true;
-            if (Input.mousePosition.x < Screen.width / 2f) horizontalInput = -1f;
-            else horizontalInput = 1f;
-
-            if (Input.GetMouseButtonDown(0))
-            {
-                float timeSinceLastTap = Time.time - lastTapTime;
-                if (timeSinceLastTap <= doubleTapTimeLimit) isDoubleTapHolding = true;
-                lastTapTime = Time.time;
-            }
-        }
-
-        if (Input.GetMouseButtonUp(0)) isDoubleTapHolding = false;
-
-        if (Input.touchCount > 0)
-        {
-            anyTouchActive = true;
-            Touch touch = Input.GetTouch(0);
-
-            if (touch.position.x < Screen.width / 2f) horizontalInput = -1f;
-            else horizontalInput = 1f;
-
-            if (touch.phase == TouchPhase.Began)
-            {
-                float timeSinceLastTap = Time.time - lastTapTime;
-                if (timeSinceLastTap <= doubleTapTimeLimit) isDoubleTapHolding = true;
-                lastTapTime = Time.time;
-            }
-            if (touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled) isDoubleTapHolding = false;
-        }
-
-        if (anyTouchActive && isDoubleTapHolding && currentFuel > 0) isFlying = true;
-        else isFlying = false;
     }
 
     public void AddFuel(float amount)

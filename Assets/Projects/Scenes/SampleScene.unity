@@ -710,10 +710,13 @@ MonoBehaviour:
   - {fileID: 7573069601970048545, guid: 2f6d71076c66cb84c9f7ab8c7bf7608c, type: 3}
   - {fileID: 7573069601970048545, guid: 784ce475a41ff764f905621cb52ad916, type: 3}
   - {fileID: 7573069601970048545, guid: 9e42dd3c38967a645b5a00ec010e57cc, type: 3}
-  platformCount: 20
-  spawnWidth: 2.5
-  minY: 1.5
-  maxY: 3.5
+  platformCount: 35
+  spawnWidth: 4
+  minY: 0.8
+  maxY: 1.4
+  springOffsetY: 0.5
+  enemyOffsetY: 0.85
+  itemOffsetY: 0.7
   springPrefab: {fileID: 435011789320934512, guid: 0ca0bf9ce6722ee4e9552ded618622f4, type: 3}
   enemyPrefab: {fileID: 4815783032467513462, guid: bd75336e72434bd478b82532e9332eaa, type: 3}
   fuelPrefab: {fileID: 4000572670301676990, guid: c9211462c450f73409db0168f4709d60, type: 3}
@@ -966,8 +969,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 3.71, z: 0}
-  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
+  m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 720697819}
   - {fileID: 1916360998}
@@ -990,7 +993,8 @@ MonoBehaviour:
   flyForce: 15
   fuelBurnRate: 25
   moveSpeed: 8
-  doubleTapTimeLimit: 0.3
+  doubleTapTimeLimit: 0.2
+  gyroSensitivity: 2.5
   characterVisual: {fileID: 720697819}
   playerEyeSpriteRenderer: {fileID: 1604624221}
   deadEyeSprite: {fileID: 21300000, guid: 6ac22edf80f76414789f6e08341c4d62, type: 3}

@@ -8,8 +8,7 @@ public class GameManager : MonoBehaviour
     public Transform playerTransform;
     public TextMeshProUGUI scoreText;
 
-    [Header("Game Over UI Ayarları")]
-    public GameObject gameOverPanel;
+    [Header("Game Over UI Ayarları")] public GameObject gameOverPanel;
 
     private float highestY = 0f;
     private int highScore = 0;
@@ -121,9 +120,12 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame()
     {
-        // --- YENİ EKLENEN: BUTON TIKLAMA SESİ ---
         if (AudioManager.Instance != null)
         {
+            // YENİ EKLENEN: Önce çalan Game Over sesini anında durdur
+            AudioManager.Instance.StopAllSFX();
+
+            // Sonra buton tıklama sesini çal
             AudioManager.Instance.PlaySFX(AudioManager.Instance.buttonClickSound);
         }
 
@@ -131,11 +133,15 @@ public class GameManager : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
+
     public void GoToMainMenu()
     {
-        // --- YENİ EKLENEN: BUTON TIKLAMA SESİ ---
         if (AudioManager.Instance != null)
         {
+            // YENİ EKLENEN: Önce çalan Game Over sesini anında durdur
+            AudioManager.Instance.StopAllSFX();
+
+            // Sonra buton tıklama sesini çal
             AudioManager.Instance.PlaySFX(AudioManager.Instance.buttonClickSound);
         }
 

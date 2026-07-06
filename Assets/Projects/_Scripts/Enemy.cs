@@ -2,16 +2,16 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    [Header("Darbe Zýplama Gücü")]
+    [Header("Darbe ZÄ±plama GÃ¼cÃ¼")]
     public float bounceForce = 12f;
 
-    [Header("Saldýrý Menzil Ayarlarý")]
+    [Header("SaldÄ±rÄ± Menzil AyarlarÄ±")]
     public float attackRange = 3.5f;
     private Transform playerTransform;
     private Animator enemyAnimator;
     private bool wasPlayerClose = false;
 
-    [Header("Görsel Yön Ayarý")]
+    [Header("GÃ¶rsel YÃ¶n AyarÄ±")]
     public Transform enemyVisual;
 
     private float nextDamageTime = 0f;
@@ -35,35 +35,35 @@ public class Enemy : MonoBehaviour
 
     void Update()
     {
-        Vector3 globalScale = transform.lossyScale;
+        if (playerTransform == null) return;
+
+        // --- DÃœZELTÄ°LEN ALAN: YÃ¶n DÃ¶ndÃ¼rme (Flipping) ---
+        // Objenin mevcut boyutunu (Scale) alÄ±p bozmadan sadece x eksenini eksi/artÄ± yapÄ±yoruz
+        Vector3 currentScale = transform.localScale;
 
         if (playerTransform.position.x > transform.position.x)
         {
-            transform.localScale = new Vector3(
-                -Mathf.Abs(transform.localScale.x / globalScale.x),
-                Mathf.Abs(transform.localScale.y / globalScale.y),
-                Mathf.Abs(transform.localScale.z / globalScale.z)
-            );
+            // Oyuncu dÃ¼ÅŸmanÄ±n saÄŸÄ±ndaysa sola baksÄ±n (X'i negatif yap)
+            currentScale.x = -Mathf.Abs(currentScale.x);
         }
         else if (playerTransform.position.x < transform.position.x)
         {
-            transform.localScale = new Vector3(
-                Mathf.Abs(transform.localScale.x / globalScale.x),
-                Mathf.Abs(transform.localScale.y / globalScale.y),
-                Mathf.Abs(transform.localScale.z / globalScale.z)
-            );
+            // Oyuncu dÃ¼ÅŸmanÄ±n solundaysa saÄŸa baksÄ±n (X'i pozitif yap)
+            currentScale.x = Mathf.Abs(currentScale.x);
         }
 
+        transform.localScale = currentScale;
+
+        // --- SALDIRI KONTROLÃœ ---
         float distanceToPlayer = Vector2.Distance(transform.position, playerTransform.position);
         bool isPlayerCloseNow = distanceToPlayer <= attackRange;
 
         if (isPlayerCloseNow != wasPlayerClose)
         {
             wasPlayerClose = isPlayerCloseNow;
-            enemyAnimator.SetBool("isAttacking", isPlayerCloseNow);
+            if (enemyAnimator != null) enemyAnimator.SetBool("isAttacking", isPlayerCloseNow);
 
-            // --- YENÝ EKLENEN: DÜÞMAN KILICINI SALLAMA SESÝ ---
-            // Düþman kýlýç sallama animasyonuna geçtiði o ilk karede ses tetiklenir
+            // DÃ¼ÅŸman kÄ±lÄ±Ã§ sallama animasyonuna geÃ§tiÄŸi o ilk karede ses tetiklenir
             if (isPlayerCloseNow && AudioManager.Instance != null)
             {
                 AudioManager.Instance.PlaySFX(AudioManager.Instance.enemySwordSwingSound);
@@ -100,10 +100,9 @@ public class Enemy : MonoBehaviour
                 hasShieldSavedUs = ShieldManager.Instance.TakeShieldDamage();
             }
 
-            // Eger kalkan bizi kurtaramadiysa (Kalkan yoksa veya bittiyse) oyuncu olur
+            // EÄŸer kalkan bizi kurtaramadÄ±ysa (Kalkan yoksa veya bittiyse) oyuncu Ã¶lÃ¼r
             if (!hasShieldSavedUs)
             {
-                // --- YENÝ EKLENEN: KALKANSIZ DÜÞMANA ÖLME SESÝ ---
                 if (AudioManager.Instance != null)
                 {
                     AudioManager.Instance.PlaySFX(AudioManager.Instance.enemyDeathSound);
@@ -126,7 +125,7 @@ public class Enemy : MonoBehaviour
                 return;
             }
 
-            // Eger kalkan bizi kurtardiysa, dusman YOK OLMAZ!
+            // EÄŸer kalkan bizi kurtardÄ±ysa
             nextDamageTime = Time.time + damageCooldown;
 
             Rigidbody2D rb = collision.GetComponent<Rigidbody2D>();

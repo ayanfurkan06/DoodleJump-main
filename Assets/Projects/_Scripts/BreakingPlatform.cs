@@ -2,33 +2,27 @@ using UnityEngine;
 
 public class BreakingPlatform : MonoBehaviour
 {
-    private void OnCollisionEnter2D(Collision2D collision)
+    private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Karakter yukaridan asagi dogru duserken bu basamaga bastiysa
-        if (collision.gameObject.CompareTag("Player") && collision.relativeVelocity.y <= 0.1f)
+        // Temas eden obje karakter mi kontrol et
+        if (collision.gameObject.CompareTag("Player"))
         {
-            // Karakteri kesin olarak yukari firlat
-            collision.gameObject.GetComponent<Rigidbody2D>().linearVelocity = new Vector2(collision.gameObject.GetComponent<Rigidbody2D>().linearVelocity.x, 12f);
+            // Karakterin fiziksel bileÅŸenine (Rigidbody2D) eriÅŸiyoruz
+            Rigidbody2D playerRb = collision.gameObject.GetComponent<Rigidbody2D>();
 
-            // --- YENÝ EKLENEN: KIRILAN PLATFORM SESÝ ---
-            if (AudioManager.Instance != null)
+            // Karakter sadece AÅžAÄžI doÄŸru dÃ¼ÅŸerken bu platform kÄ±rÄ±lsÄ±n
+            // (YukarÄ± zÄ±plarken iÃ§inden sorunsuz geÃ§ebilmesi iÃ§in)
+            if (playerRb != null && playerRb.linearVelocity.y <= 0.1f)
             {
-                AudioManager.Instance.PlaySFX(AudioManager.Instance.brokenPlatformJumpSound);
+                // --- KIRILAN PLATFORM SESÄ° ---
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX(AudioManager.Instance.brokenPlatformJumpSound);
+                }
+
+                // Platformu anÄ±nda yok et
+                Destroy(gameObject);
             }
-
-            // --- ANIMASYON TETIKLEME KATMANI ---
-            // Karakterin altindaki Animator bilesenini bulup bacak esnetmesini tetikliyoruz
-            Animator playerAnim = collision.gameObject.GetComponentInChildren<Animator>();
-
-            // --- KESÝN ÇÖZÜM: EKSÝK OLAN TETÝKLEYÝCÝ EMÝR ---
-            if (playerAnim != null)
-            {
-                playerAnim.ResetTrigger("BounceTrigger");
-                playerAnim.SetTrigger("BounceTrigger");
-            }
-
-            // Basamagi aninda yok et
-            Destroy(gameObject);
         }
     }
 }

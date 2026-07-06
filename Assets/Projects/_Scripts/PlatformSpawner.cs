@@ -2,30 +2,36 @@ using UnityEngine;
 
 public class PlatformSpawner : MonoBehaviour
 {
-    [Header("Platform Prefablarý")]
+    [Header("Platform PrefablarÄ±")]
     public GameObject[] platformPrefabs;
 
     [Header("Ayarlar")]
-    public int platformCount = 20;
+    public int platformCount = 35;
     public float spawnWidth = 4f;
-    public float minY = 1.5f;
-    public float maxY = 2.5f;
+    public float minY = 0.8f;
+    public float maxY = 1.5f;
 
-    [Header("Yay Üretim Ayarlarý")]
+    [Header("YerleÅŸim YÃ¼ksekliÄŸi (Offset) AyarlarÄ±")]
+    [Tooltip("Objelerin platformun ne kadar Ã¼zerinde doÄŸacaÄŸÄ±nÄ± ayarlar. KÃ¼Ã§Ã¼lttÃ¼ÄŸÃ¼n objeler iÃ§in bu deÄŸerleri dÃ¼ÅŸÃ¼r.")]
+    public float springOffsetY = 0.5f; // Eskiden 0.9f idi
+    public float enemyOffsetY = 0.6f;  // Eskiden 1.5f idi
+    public float itemOffsetY = 0.7f;   // Kalkan ve YakÄ±t iÃ§in (Eskiden 1.2f idi)
+
+    [Header("Yay Ãœretim AyarlarÄ±")]
     public GameObject springPrefab;
 
-    [Header("Düþman Üretim Ayarlarý")]
+    [Header("DÃ¼ÅŸman Ãœretim AyarlarÄ±")]
     public GameObject enemyPrefab;
 
-    [Header("Yakýt Üretim Ayarlarý")]
+    [Header("YakÄ±t Ãœretim AyarlarÄ±")]
     public GameObject fuelPrefab;
     [Range(0f, 1f)] public float fuelSpawnChance = 0.15f;
 
-    [Header("Yeni Kalkan Üretim Ayarlarý")]
-    public GameObject shield1Prefab; // Seviye 1 Kalkan Prefabý
-    public GameObject shield2Prefab; // Seviye 2 Kalkan Prefabý
-    public GameObject shield3Prefab; // Seviye 3 Kalkan Prefabý
-    [Range(0, 100)] public int shieldSpawnChance = 15; // Kalkan çýkma þansý (%)
+    [Header("Kalkan Ãœretim AyarlarÄ±")]
+    public GameObject shield1Prefab; 
+    public GameObject shield2Prefab; 
+    public GameObject shield3Prefab; 
+    [Range(0, 100)] public int shieldSpawnChance = 15; 
 
     private Vector3 spawnPosition = new Vector3();
 
@@ -55,29 +61,31 @@ public class PlatformSpawner : MonoBehaviour
 
         newPlatform.AddComponent<PlatformDestroyer>();
 
-        // --- YAY ÜRETÝMÝ ---
+        // --- YAY ÃœRETÄ°MÄ° ---
         if (chosenPrefab == platformPrefabs[0] && Random.Range(0, 100) < 15)
         {
-            Vector3 springPos = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + 0.9f, 0);
+            // Yeni springOffsetY deÄŸiÅŸkenini kullanÄ±yoruz
+            Vector3 springPos = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + springOffsetY, 0);
             GameObject spawnedSpring = Instantiate(springPrefab, springPos, Quaternion.identity);
             spawnedSpring.transform.SetParent(newPlatform.transform);
         }
 
-        // --- SENÝN ÖZEL KALKAN ÜRETÝM MOTORUN ---
         TrySpawnShield(newPlatform);
 
-        // --- DÜÞMAN ÜRETÝMÝ ---
+        // --- DÃœÅžMAN ÃœRETÄ°MÄ° ---
         if (newPlatform.transform.childCount == 0 && Random.Range(0, 100) < 10)
         {
-            Vector3 enemyPos = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + 1.5f, 0);
+            // Yeni enemyOffsetY deÄŸiÅŸkenini kullanÄ±yoruz
+            Vector3 enemyPos = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + enemyOffsetY, 0);
             GameObject spawnedEnemy = Instantiate(enemyPrefab, enemyPos, Quaternion.identity);
             spawnedEnemy.transform.SetParent(newPlatform.transform);
         }
 
-        // --- YAKIT ÜRETÝMÝ ---
+        // --- YAKIT ÃœRETÄ°MÄ° ---
         if (newPlatform.transform.childCount == 0 && fuelPrefab != null && Random.value < fuelSpawnChance)
         {
-            Vector3 fuelPosition = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + 1.2f, spawnPosition.z);
+            // Yeni itemOffsetY deÄŸiÅŸkenini kullanÄ±yoruz
+            Vector3 fuelPosition = new Vector3(newPlatform.transform.position.x, newPlatform.transform.position.y + itemOffsetY, spawnPosition.z);
             GameObject spawnedFuel = Instantiate(fuelPrefab, fuelPosition, Quaternion.identity);
             spawnedFuel.transform.SetParent(newPlatform.transform);
         }
@@ -94,15 +102,9 @@ public class PlatformSpawner : MonoBehaviour
             currentShield = ShieldManager.Instance.currentShieldLevel;
         }
 
-        // Kural: Karakterde 3. seviye kalkan varsa veya daha büyüðü, haritada HÝÇBÝR kalkan spawn olamaz
         if (currentShield >= 3) return;
 
-        // YENÝ KATÝ KURAL: Haritada SADECE karakterin elindeki kalkanýn BÝR ÜST SEVÝYESÝ doðabilir.
-        // Elinde kalkan yoksa (0) -> Sadece 1 doðar
-        // Elinde 1 varsa          -> Sadece 2 doðar
-        // Elinde 2 varsa          -> Sadece 3 doðar
         int nextRequiredLevel = currentShield + 1;
-
         GameObject shieldToSpawn = null;
 
         if (nextRequiredLevel == 1 && shield1Prefab != null) shieldToSpawn = shield1Prefab;
@@ -111,7 +113,8 @@ public class PlatformSpawner : MonoBehaviour
 
         if (shieldToSpawn != null)
         {
-            Vector3 shieldPos = new Vector3(platform.transform.position.x, platform.transform.position.y + 1.2f, 0);
+            // Yeni itemOffsetY deÄŸiÅŸkenini kullanÄ±yoruz
+            Vector3 shieldPos = new Vector3(platform.transform.position.x, platform.transform.position.y + itemOffsetY, 0);
             GameObject spawnedShield = Instantiate(shieldToSpawn, shieldPos, Quaternion.identity);
             spawnedShield.transform.SetParent(platform.transform);
         }
