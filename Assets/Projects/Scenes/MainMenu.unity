@@ -1275,7 +1275,7 @@ MonoBehaviour:
   collectHealthSound: {fileID: 958827407}
   takeDamageSound: {fileID: 958827406}
   gameOverSound: {fileID: 958827405}
-  buttonClickSound: {fileID: 958827404}
+  buttonClickSound: {fileID: 958827410}
   brokenPlatformJumpSound: {fileID: 958827403}
   enemyDeathSound: {fileID: 958827402}
   shieldEquipSound: {fileID: 958827401}
